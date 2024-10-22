@@ -1,0 +1,8 @@
+{
+    "aws_access_key": "AKIAQVCRNMMC7UUONGQ2",
+    "aws_secret_key": "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",
+    "region": "us-east-2",
+    "refresh_frequency": 300,
+    "sync_folder": "D:/Videos",
+    "bucket_name": "zugaarchive"
+}

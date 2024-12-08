@@ -32,14 +32,28 @@ export const CredentialsForm: React.FC = () => {
     const useEnv = e.target.checked;
     try {
       setLoading(true);
-      await api.setCredentialSource({ useEnvVars: useEnv });
-      setPreferEnvVars(useEnv);
+      setError(null);
       
-      if (useEnv && await api.checkCredentialSource().then(r => r.usingEnvVars)) {
-        window.location.reload();
-      } else if (!useEnv) {
-        window.location.reload();
+      // If enabling env vars, check if they exist first
+      if (useEnv) {
+        const envVarCheck = await api.checkCredentialSource();
+        if (!envVarCheck.usingEnvVars) {
+          setError('No environment variables found. Please set AWS_ACCESS_KEY and AWS_SECRET_KEY');
+          return;
+        }
       }
+      
+      // Make API call first
+      await api.setCredentialSource({ useEnvVars: useEnv });
+      
+      // Update local state after successful API call
+      setPreferEnvVars(useEnv);
+      setUsingEnvVars(useEnv);
+      
+      // Don't reload the page, just update the state
+      const configResponse = await api.getConfig();
+      updateConfig(configResponse);
+      
     } catch (err) {
       console.error('Error setting credential source:', err);
       setError('Failed to update credential source preference');

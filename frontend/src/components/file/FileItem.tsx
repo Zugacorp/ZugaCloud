@@ -6,23 +6,13 @@ import { VideoThumbnail } from './VideoThumbnail';
 import { formatFileSize, handleVideoPlay } from '../../utils/file';
 import { api } from '../../api/client';
 import { ContextMenu } from '../common/ContextMenu';
-import { cn } from '../../utils/cn';
 
 interface FileItemProps {
   file: FileItemType;
   onClick: () => void;
-  selected?: boolean;
-  onSelect?: () => void;
-  viewMode?: 'grid' | 'list';
 }
 
-export const FileItem: React.FC<FileItemProps> = ({ 
-  file, 
-  onClick, 
-  selected = false,
-  onSelect,
-  viewMode = 'grid' 
-}) => {
+export const FileItem: React.FC<FileItemProps> = ({ file, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasLocalCopy, setHasLocalCopy] = useState(false);
@@ -31,8 +21,9 @@ export const FileItem: React.FC<FileItemProps> = ({
     x: 0,
     y: 0
   });
-
+  
   useEffect(() => {
+    // Check if file exists locally when component mounts
     const checkLocalExistence = async () => {
       if (file.type === 'file') {
         const exists = await api.checkLocalFile(file.path);
@@ -45,8 +36,6 @@ export const FileItem: React.FC<FileItemProps> = ({
 
   const handleClick = async (e: React.MouseEvent) => {
     if (e.button === 2) return;
-    
-    onSelect?.();
     
     if (file.type === 'folder') {
       onClick();
@@ -78,7 +67,6 @@ export const FileItem: React.FC<FileItemProps> = ({
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onSelect?.();
     setContextMenu({
       isOpen: true,
       x: e.clientX,
@@ -101,141 +89,107 @@ export const FileItem: React.FC<FileItemProps> = ({
   const handleDelete = async (type: 'local' | 's3') => {
     try {
       if (type === 'local') {
+        if (!hasLocalCopy) {
+          throw new Error('File does not exist locally');
+        }
         await api.deleteLocalFile(file.path);
         setHasLocalCopy(false);
       } else {
         await api.deleteS3Object(file.path);
       }
+      // Trigger refresh of the file list
       window.location.reload();
     } catch (error) {
       console.error(`Error deleting file (${type}):`, error);
+      // You might want to show an error notification here
     }
   };
 
   const handleDownload = async () => {
     try {
       const url = await api.getPresignedUrl(file.path);
-      const filename = file.name || file.path.split('/').pop() || 'download';
-      
-      if (window.electronAPI?.downloadFile) {
-        const result = await window.electronAPI.downloadFile(url, filename);
-        if (result.success) {
-          console.log(`File downloaded to: ${result.path}`);
-        }
-      } else {
+      if (!window.electronAPI?.downloadFile) {
+        // Fallback to browser download if not in electron
         window.open(url, '_blank');
+        return;
+      }
+
+      // Ensure we have a filename
+      const filename = file.name || file.path.split('/').pop() || 'download';
+      console.log('Downloading file:', { url, filename }); // Debug log
+
+      const result = await window.electronAPI.downloadFile(url, filename);
+      if (result.success) {
+        console.log(`File downloaded to: ${result.path}`);
+        // Optionally show a success notification
       }
     } catch (error) {
       console.error('Error downloading file:', error);
+      // Optionally show an error notification
     }
   };
 
-  const containerClasses = cn(
-    "group relative cursor-pointer transition-colors",
-    viewMode === 'grid' ? "p-2 rounded-lg" : "p-3 rounded-md",
-    selected ? "bg-[#233554]" : "hover:bg-[#1a2942]",
-    "focus:outline-none focus:ring-2 focus:ring-blue-500"
-  );
-
-  if (viewMode === 'list') {
-    return (
-      <div
-        className={containerClasses}
+  return (
+    <div className="group cursor-pointer">
+      <div 
         onClick={handleClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        tabIndex={0}
+        className="relative group cursor-pointer p-2 rounded-lg hover:bg-[#233554] transition-colors"
       >
-        <div className="flex items-center space-x-4">
-          {file.type === 'folder' ? (
-            <div className="w-10 flex justify-center">
-              {isHovered ? (
-                <FaFolderOpen className="w-6 h-6 text-blue-400" />
-              ) : (
-                <FaFolder className="w-6 h-6 text-blue-400" />
-              )}
-            </div>
+        <div className="relative w-full rounded-lg overflow-hidden bg-[#112240] mb-2" style={{ aspectRatio: '16/9' }}>
+          {file.isVideo ? (
+            <VideoThumbnail
+              file={file}
+              thumbnailUrl={file.thumbnailUrl}
+              previewUrl={file.previewUrl}
+              onContextMenu={handleContextMenu}
+            />
           ) : (
-            <div className="w-10 flex justify-center">
-              {file.isVideo ? (
-                <BsFilePlayFill className="w-6 h-6 text-purple-400" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              {file.type === 'folder' ? (
+                <>
+                  {isHovered ? (
+                    <FaFolderOpen className="w-16 h-16 text-blue-400 transition-transform transform scale-110" />
+                  ) : (
+                    <FaFolder className="w-16 h-16 text-blue-400" />
+                  )}
+                  <span className="text-xs text-blue-400 mt-2">FOLDER</span>
+                </>
               ) : (
-                <BsFileFill className={`w-6 h-6 ${getFileColor()}`} />
+                <>
+                  <BsFileFill className={`w-16 h-16 ${getFileColor()}`} />
+                  <span className={`text-xs mt-2 ${getFileColor()}`}>
+                    {file.extension?.toUpperCase()}
+                  </span>
+                </>
               )}
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <div className="text-sm truncate text-gray-100">{file.name}</div>
-            {file.size && file.type !== 'folder' && (
-              <div className="text-xs text-gray-400">{formatFileSize(file.size)}</div>
-            )}
-          </div>
         </div>
-        <ContextMenu
-          file={file}
-          isOpen={contextMenu.isOpen}
-          position={{ x: contextMenu.x, y: contextMenu.y }}
-          onClose={() => setContextMenu({ isOpen: false, x: 0, y: 0 })}
-          onPlay={handlePlay}
-          onDelete={handleDelete}
-          onDownload={handleDownload}
-          hasLocalCopy={hasLocalCopy}
-        />
-      </div>
-    );
-  }
-
-  // Grid view (default)
-  return (
-    <div
-      className={containerClasses}
-      onClick={handleClick}
-      onContextMenu={handleContextMenu}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      tabIndex={0}
-    >
-      <div className="relative w-full rounded-lg overflow-hidden bg-[#112240] mb-2" style={{ aspectRatio: '16/9' }}>
-        {file.isVideo ? (
-          <VideoThumbnail
-            file={file}
-            thumbnailUrl={file.thumbnailUrl}
-            previewUrl={file.previewUrl}
-            onContextMenu={handleContextMenu}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {file.type === 'folder' ? (
-              <>
-                {isHovered ? (
-                  <FaFolderOpen className="w-16 h-16 text-blue-400 transition-transform transform scale-110" />
-                ) : (
-                  <FaFolder className="w-16 h-16 text-blue-400" />
-                )}
-                <span className="text-xs text-blue-400 mt-2">FOLDER</span>
-              </>
-            ) : (
-              <>
-                <BsFileFill className={`w-16 h-16 ${getFileColor()}`} />
-                <span className={`text-xs mt-2 ${getFileColor()}`}>
-                  {file.extension?.toUpperCase()}
-                </span>
-              </>
-            )}
+        
+        <div className="text-sm truncate text-center text-gray-100">
+          {file.name}
+        </div>
+        
+        {file.size && file.type !== 'folder' && (
+          <div className="text-xs text-gray-400 text-center">
+            {formatFileSize(file.size)}
           </div>
         )}
       </div>
-      
-      <div className="text-sm truncate text-center text-gray-100">
-        {file.name}
-      </div>
-      
-      {file.size && file.type !== 'folder' && (
-        <div className="text-xs text-gray-400 text-center">
-          {formatFileSize(file.size)}
-        </div>
-      )}
+      <ContextMenu
+        file={file}
+        isOpen={contextMenu.isOpen}
+        position={{ x: contextMenu.x, y: contextMenu.y }}
+        onClose={() => setContextMenu({ isOpen: false, x: 0, y: 0 })}
+        onPlay={handlePlay}
+        onDelete={handleDelete}
+        onDownload={handleDownload}
+        onInfo={() => {}}
+        hasLocalCopy={hasLocalCopy}
+      />
     </div>
   );
 };

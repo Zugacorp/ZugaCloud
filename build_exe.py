@@ -4,203 +4,218 @@ import PyInstaller.__main__
 import os
 import sys
 import tkinter
+import shutil
+from cryptography.fernet import Fernet
 
 def create_readme():
-    readme_content = """# ZugaCloud Readme App
+    """Create the README.md file with updated instructions."""
+    readme_content = """# ZugaCloud - Infinite Video Storage
 
-This document provides step-by-step instructions on how to create an AWS account, set up an S3 bucket, and create an IAM user with the appropriate permissions for your ZugaCloud app.
+A desktop application for seamless video storage and synchronization with AWS S3.
 
-## Table of Contents
+## Features
 
-1. [Creating an AWS Account](#1-creating-an-aws-account)
-2. [Setting Up an S3 Bucket](#2-setting-up-an-s3-bucket)
-3. [Creating an IAM User](#3-creating-an-iam-user)
-4. [Assigning Permissions: AmazonS3FullAccess](#4-assigning-permissions-amazons3fullaccess)
-5. [Creating and Attaching Custom Inline Policies](#5-creating-and-attaching-custom-inline-policies)
-6. [Modifying the Custom Inline Policy for Different Use Cases](#6-modifying-the-custom-inline-policy-for-different-use-cases)
+- Automatic synchronization with AWS S3
+- Video thumbnail generation
+- Secure credential management
+- Bucket management
+- File organization
+- Progress tracking
+- Auto-retry on failure
 
----
+## Requirements
 
-### 1. Creating an AWS Account
+- AWS Account
+- AWS S3 Bucket
+- AWS CLI installed
+- Windows 7 or later
 
-1. Visit the [AWS Sign Up Page](https://portal.aws.amazon.com/billing/signup#/start).
-2. Enter your email address and create a new AWS account by following the on-screen instructions.
-3. Verify your identity via a phone number and credit card information (this is for verification purposes only; you won't be charged unless you use paid services).
-4. After completing the sign-up process, log in to the [AWS Management Console](https://aws.amazon.com/console/).
+## Setup Instructions
 
----
+1. Install the AWS CLI from: https://aws.amazon.com/cli/
+2. Configure AWS credentials in the application settings
+3. Select or create an S3 bucket
+4. Choose a local folder for synchronization
+5. Start syncing!
 
-### 2. Setting Up an S3 Bucket
+## Usage
 
-1. Log in to your AWS Management Console.
-2. Navigate to [**Services** > **S3**](https://s3.console.aws.amazon.com/s3/home).
-3. Click on **Create Bucket**.
-4. Configure your bucket settings:
-   - **Bucket Name**: Choose a globally unique name, e.g., `zugaarchive`.
-   - **Region**: Select a region close to your primary users or application.
-5. Keep default settings unless specific configurations are required (e.g., versioning or encryption).
-6. Click **Create Bucket**.
+1. Launch ZugaCloud
+2. Enter AWS credentials in Settings
+3. Select or create a bucket
+4. Choose a local folder
+5. Click SYNC to start synchronization
 
----
+## Troubleshooting
 
-### 3. Creating an IAM User
+If you encounter permission issues:
+1. Run the application as administrator
+2. Ensure you have write permissions to the sync folder
+3. Check AWS credentials and permissions
 
-1. Navigate to [**Services** > **IAM** (Identity and Access Management)](https://console.aws.amazon.com/iam/home).
-2. Click on **Users** from the left sidebar.
-3. Select **Add User**.
-4. Set the username (e.g., `zugacloud-user`) and choose the **Access type**:
-   - Select **Programmatic access** if the user will interact with AWS programmatically (e.g., via the CLI or SDK).
-   - Select **AWS Management Console access** if the user needs access to the AWS Console.
-5. Click **Next: Permissions**.
-
----
-
-### 4. Assigning Permissions: AmazonS3FullAccess
-
-1. On the **Permissions** page, click on **Attach policies directly**.
-2. Search for `AmazonS3FullAccess` in the list of available policies.
-3. Check the box next to `AmazonS3FullAccess` to grant the user full access to S3.
-4. Click **Next: Tags**, add any necessary tags, and then click **Next: Review**.
-5. Review the user configuration and click **Create User**.
-
----
-
-### 5. Creating and Attaching Custom Inline Policies
-
-After creating the user with `AmazonS3FullAccess`, you can define custom permissions based on specific needs using inline policies. This section covers adding an inline policy to restrict access to a specific bucket and its objects.
-
-1. Go to [**Services** > **IAM** > **Users**](https://console.aws.amazon.com/iam/home#/users).
-2. Select the newly created user (e.g., `zugacloud-user`).
-3. Click on the **Permissions** tab.
-4. Scroll down and click **Add inline policy**.
-5. Select the **JSON** tab and paste the following JSON code to define the custom policy:
-
-   ```json
-   {
-       "Version": "2012-10-17",
-       "Statement": [
-           {
-               "Effect": "Allow",
-               "Action": [
-                   "s3:ListBucket",
-                   "s3:GetObject"
-               ],
-               "Resource": [
-                   "arn:aws:s3:::zugaarchive",
-                   "arn:aws:s3:::zugaarchive/*"
-               ]
-           }
-       ]
-   }
-   ```
-6. Click Review Policy
-7. Enter a name for the policy (e.g., ZugaCloudCustomPolicy) and click Create Policy.
-
----
-
-### 6. Modifying the Custom Inline Policy for Different Use Cases
-
-The provided custom inline policy restricts the user to only list and read objects in the zugaarchive bucket. If you want to modify this policy for different scenarios, you can adjust the Action and Resource fields accordingly.
-
-#### Adjusting Permissions Based on Actions
-
-- `s3:ListBucket`: Allows the user to list the objects in the specified bucket.
-- `s3:GetObject`: Allows the user to read the contents of the objects in the specified bucket.
-- Add or remove actions as needed, such as `s3:PutObject` (to upload new objects) or `s3:DeleteObject` (to delete objects).
-
-Example: If you want the user to also upload files to the bucket, update the Action field like this:
-
-```json
-"Action": [
-    "s3:ListBucket",
-    "s3:GetObject",
-    "s3:PutObject"
-]
-```
-
-#### Modifying the Resource Field
-
-- The Resource field specifies which S3 bucket and objects the policy applies to.
-- Update the bucket name if using a different one. For example, to allow access to a bucket named mybucket and its contents, change the Resource field like this:
-
-```json
-"Resource": [
-    "arn:aws:s3:::mybucket",
-    "arn:aws:s3:::mybucket/*"
-]
-```
-
-#### Restricting to Specific Folders
-
-To further restrict access to a specific folder in the bucket, modify the Resource field with the folder path. For example, to limit access to a folder named data:
-
-```json
-"Resource": [
-    "arn:aws:s3:::mybucket/data",
-    "arn:aws:s3:::mybucket/data/*"
-]
-```
-
-#### Setting Conditions
-
-You can add conditions to control access based on factors such as IP address, time of day, or the presence of certain tags on objects. For example, to restrict access to a specific IP range, add a Condition block:
-
-```json
-"Condition": {
-    "IpAddress": {
-        "aws:SourceIp": "203.0.113.0/24"
-    }
-}
-```
+For more help, visit: https://aws.amazon.com/documentation/s3/
 """
-
     with open('README.md', 'w') as f:
         f.write(readme_content)
 
-def build_exe():
-    # Get the directory of the current script
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Create README.md
-    create_readme()
-    
-    # Define the path to main.py
-    main_path = os.path.join(current_dir, 'main.py')
-    
-    # Get Tkinter DLL path
-    tkinter_dir = os.path.dirname(tkinter.__file__)
-    
-    # Define PyInstaller command
-    pyinstaller_command = [
-        'main.py',
-        '--onefile',
-        '--windowed',
-        '--name=ZugaCloud',
-        '--add-data=frontend:frontend',
-        '--add-data=backend:backend',
-        '--add-data=config:config',
-        '--add-data=README.md:.',  # Add this line to include the README file
-        f'--icon={os.path.join(current_dir, "assets", "zugacloud_icon.ico")}',
-        '--clean',
-        '--noconfirm',
-        '--log-level=WARN',
-        f'--distpath={os.path.join(current_dir, "dist")}',
-        f'--workpath={os.path.join(current_dir, "build")}',
-        f'--add-data={tkinter_dir};tkinter',
-        '--hidden-import=tkinter',
-        '--hidden-import=tkinter.filedialog',
-        '--hidden-import=numpy',
-        '--hidden-import=cv2',
-        '--hidden-import=PIL',
-        '--hidden-import=boto3',
-        '--hidden-import=botocore',
+def create_version_file():
+    """Create version information file."""
+    version_info = """
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 1, 0, 0),
+    prodvers=(1, 1, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'ZugaCloud'),
+         StringStruct(u'FileDescription', u'ZugaCloud Video Storage'),
+         StringStruct(u'FileVersion', u'1.1.0'),
+         StringStruct(u'InternalName', u'zugacloud'),
+         StringStruct(u'LegalCopyright', u'Copyright (c) 2024 ZugaCloud'),
+         StringStruct(u'OriginalFilename', u'ZugaCloud.exe'),
+         StringStruct(u'ProductName', u'ZugaCloud'),
+         StringStruct(u'ProductVersion', u'1.1.0')])
+    ]),
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)
+"""
+    with open('version_info.txt', 'w') as f:
+        f.write(version_info)
+
+def create_manifest():
+    """Create the application manifest file."""
+    manifest_content = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity
+    version="1.0.0.0"
+    processorArchitecture="X86"
+    name="ZugaCloud"
+    type="win32"
+  />
+  <description>ZugaCloud Video Storage Application</description>
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security>
+      <requestedPrivileges>
+        <requestedExecutionLevel level="requireAdministrator" uiAccess="false"/>
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>
+      <supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}"/>
+      <supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>
+      <supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"/>
+    </application>
+  </compatibility>
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+</assembly>
+"""
+    with open('app.manifest', 'w') as f:
+        f.write(manifest_content)
+
+def setup_encryption():
+    """Generate encryption key for secure storage."""
+    key = Fernet.generate_key()
+    with open('backend/encryption.key', 'wb') as f:
+        f.write(key)
+
+def ensure_directories():
+    """Ensure all required directories exist."""
+    directories = [
+        'dist',
+        'build',
+        'frontend/assets/thumbnails',
+        'frontend/assets/icons',
+        'frontend/assets/logo',
+        'config'
     ]
-    
-    # Add Anaconda DLL directory to PATH
-    os.environ['PATH'] = os.path.join(sys.prefix, 'Library', 'bin') + os.pathsep + os.environ['PATH']
-    
-    # Run PyInstaller
-    PyInstaller.__main__.run(pyinstaller_command)
+    for directory in directories:
+        os.makedirs(directory, exist_ok=True)
+
+def build_exe():
+    """Build the executable with PyInstaller."""
+    try:
+        # Create necessary files and directories
+        create_readme()
+        create_version_file()
+        create_manifest()
+        setup_encryption()
+        ensure_directories()
+
+        # Get the directory of the current script
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Get Tkinter DLL path
+        tkinter_dir = os.path.dirname(tkinter.__file__)
+        
+        # Define PyInstaller command
+        pyinstaller_command = [
+            'main.py',
+            '--onefile',
+            '--windowed',
+            '--name=ZugaCloud',
+            '--add-data=frontend:frontend',
+            '--add-data=backend:backend',
+            '--add-data=config:config',
+            '--add-data=README.md:.',
+            f'--icon={os.path.join(current_dir, "assets", "zugacloud_icon.ico")}',
+            '--version-file=version_info.txt',
+            '--manifest=app.manifest',
+            '--clean',
+            '--noconfirm',
+            '--log-level=WARN',
+            f'--distpath={os.path.join(current_dir, "dist")}',
+            f'--workpath={os.path.join(current_dir, "build")}',
+            f'--add-data={tkinter_dir};tkinter',
+            '--hidden-import=tkinter',
+            '--hidden-import=tkinter.filedialog',
+            '--hidden-import=numpy',
+            '--hidden-import=cv2',
+            '--hidden-import=PIL',
+            '--hidden-import=boto3',
+            '--hidden-import=botocore',
+            '--hidden-import=win32security',
+            '--hidden-import=win32api',
+            '--hidden-import=win32con',
+            '--hidden-import=cryptography',
+            '--uac-admin'
+        ]
+        
+        # Add Anaconda DLL directory to PATH
+        os.environ['PATH'] = os.path.join(sys.prefix, 'Library', 'bin') + os.pathsep + os.environ['PATH']
+        
+        # Run PyInstaller
+        PyInstaller.__main__.run(pyinstaller_command)
+
+        # Clean up temporary files
+        os.remove('version_info.txt')
+        os.remove('app.manifest')
+
+        print("Build completed successfully!")
+        return True
+
+    except Exception as e:
+        print(f"Error during build: {e}")
+        return False
 
 if __name__ == "__main__":
-    build_exe()
+    if build_exe():
+        print("Application built successfully!")
+    else:
+        print("Build failed. Check the error messages above.")

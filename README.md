@@ -5,91 +5,136 @@ A desktop application built with Python, Flask, React, and Electron for seamless
 ## Complete Project Structure
 
 ```
-zugacloud/
-├── backend/
-│ ├── api/
-│ │ ├── init.py
-│ │ └── routes.py # API endpoints and route handlers
-│ ├── config/
-│ │ └── config.json # Application configuration
-│ ├── aws_integration.py # AWS S3 operations
-│ ├── config_manager.py # Configuration management
-│ ├── file_sync.py # File synchronization logic
-│ ├── sync_manager.py # Sync orchestration
-│ └── init.py
-├── frontend/
-│ ├── electron/
-│ │ ├── src/
-│ │ │ ├── main.cjs # Electron main process
-│ │ │ └── preload.cjs # Preload scripts
-│ │ ├── index.ts # Electron entry point
-│ │ └── tsconfig.json # TypeScript config for Electron
-│ ├── src/
-│ │ ├── api/
-│ │ │ ├── client.ts # API client
-│ │ │ └── types.ts # API type definitions
-│ │ ├── components/
-│ │ │ ├── aws/
-│ │ │ │ ├── BucketSelector.tsx
-│ │ │ │ └── CredentialsForm.tsx
-│ │ │ ├── common/
-│ │ │ │ ├── Button.tsx
-│ │ │ │ ├── LoadingSpinner.tsx
-│ │ │ │ └── Progress.tsx
-│ │ │ ├── file/
-│ │ │ │ ├── FileGrid.tsx
-│ │ │ │ ├── FileItem.tsx
-│ │ │ │ ├── FileList.tsx
-│ │ │ │ └── FilePreview.tsx
-│ │ │ ├── layout/
-│ │ │ │ ├── Header.tsx
-│ │ │ │ ├── Layout.tsx
-│ │ │ │ ├── Navbar.tsx
-│ │ │ │ ├── Navigation.tsx
-│ │ │ │ └── Sidebar.tsx
-│ │ │ └── sync/
-│ │ │ ├── ProgressBar.tsx
-│ │ │ ├── SyncControls.tsx
-│ │ │ └── SyncStatus.tsx
-│ │ ├── contexts/
-│ │ │ └── SyncContext.tsx # Sync state management
-│ │ ├── hooks/
-│ │ │ ├── useConfig.ts
-│ │ │ ├── useElectronFolder.ts
-│ │ │ ├── useFileSystem.ts
-│ │ │ └── useSync.ts
-│ │ ├── pages/
-│ │ │ ├── Dashboard.tsx
-│ │ │ ├── FileExplorer.tsx
-│ │ │ └── Settings.tsx
-│ │ ├── styles/
-│ │ │ └── globals.css # Global styles
-│ │ ├── types/
-│ │ │ ├── config.ts
-│ │ │ ├── electron.d.ts
-│ │ │ ├── file.ts
-│ │ │ ├── global.d.ts
-│ │ │ ├── index.d.ts
-│ │ │ └── sync.ts
-│ │ └── utils/
-│ │ ├── cn.ts # Class name utilities
-│ │ ├── formatters.tsx # Data formatting utilities
-│ │ └── validators.tsx # Form validation utilities
-│ ├── index.html # Entry HTML
-│ ├── main.tsx # React entry point
-│ ├── package.json # Frontend dependencies
-│ ├── postcss.config.js # PostCSS configuration
-│ ├── tailwind.config.js # Tailwind CSS config
-│ ├── tsconfig.json # TypeScript config
-│ ├── tsconfig.node.json # Node-specific TS config
-│ └── vite.config.ts # Vite bundler config
-├── build_exe.py # Executable builder
-├── dev.py # Development server
-├── electron_main.js # Electron main process
-├── LICENSE # MIT License
-├── main.py # Flask application
-├── package.json # Root dependencies
-└── README.md # Project documentation
+└── 📁ZugaCloud
+    └── 📁__pycache__
+        └── main.cpython-311.pyc
+    └── 📁backend
+        └── 📁__pycache__
+            └── __init__.cpython-311.pyc
+            └── aws_integration.cpython-311.pyc
+            └── config_manager.cpython-311.pyc
+            └── file_sync.cpython-311.pyc
+            └── initialization.cpython-311.pyc
+            └── sync_queue.cpython-311.pyc
+            └── thumbnail_manager.cpython-311.pyc
+        └── 📁api
+            └── 📁__pycache__
+                └── __init__.cpython-311.pyc
+                └── routes.cpython-311.pyc
+            └── __init__.py
+            └── routes.py
+        └── 📁config
+            └── config.json
+        └── __init__.py
+        └── aws_integration.py
+        └── config_manager.py
+        └── encryption.key
+        └── file_sync.py
+        └── initialization.py
+        └── sync_manager.py
+        └── sync_queue.py
+        └── thumbnail_manager.py
+        └── utils.py
+    └── 📁frontend
+        └── 📁assets
+            └── 📁thumbnails
+                └── 📁animated
+                └── 📁static
+                └── .gitkeep
+        └── 📁electron
+            └── 📁src
+                └── main.cjs
+                └── preload.cjs
+                └── videoPlayer.html
+                └── videoPreload.cjs
+            └── index.ts
+            └── tsconfig.json
+        └── 📁scripts
+            └── build-electron.cjs
+        └── 📁src
+            └── 📁api
+                └── client.ts
+                └── types.ts
+            └── 📁components
+                └── 📁aws
+                    └── BucketSelector.tsx
+                    └── CredentialsForm.tsx
+                └── 📁common
+                    └── Button.tsx
+                    └── ContextMenu.tsx
+                    └── LoadingSpinner.tsx
+                    └── Progress.tsx
+                └── 📁file
+                    └── FileGrid.tsx
+                    └── FileItem.tsx
+                    └── FileList.tsx
+                    └── FilePreview.tsx
+                    └── VideoThumbnail.tsx
+                └── 📁layout
+                    └── Header.tsx
+                    └── Layout.tsx
+                    └── Navbar.tsx
+                    └── Navigation.tsx
+                    └── Sidebar.tsx
+                └── 📁sync
+                    └── ProgressBar.tsx
+                    └── SyncControls.tsx
+                    └── SyncStatus.tsx
+                └── 📁ui
+                    └── progress.tsx
+            └── 📁contexts
+                └── SyncContext.tsx
+            └── 📁hooks
+                └── useConfig.ts
+                └── useElectronFolder.ts
+                └── useFileSystem.ts
+                └── useSync.ts
+            └── 📁pages
+                └── Dashboard.tsx
+                └── FileExplorer.tsx
+                └── Settings.tsx
+            └── 📁styles
+                └── globals.css
+            └── 📁types
+                └── config.ts
+                └── electron.d.ts
+                └── file.ts
+                └── global.d.ts
+                └── index.d.ts
+                └── index.ts
+                └── sync.ts
+            └── 📁utils
+                └── cn.ts
+                └── file.ts
+                └── format.ts
+                └── formatters.tsx
+                └── media.ts
+                └── validators.tsx
+            └── App.tsx
+            └── main.tsx
+            └── types.d.ts
+            └── vite-env.d.ts
+        └── index.html
+        └── main.js
+        └── package-lock.json
+        └── package.json
+        └── postcss.config.js
+        └── tailwind.config.js
+        └── tsconfig.json
+        └── tsconfig.node.json
+        └── vite.config.ts
+    └── 📁scripts
+        └── SynctoS3.bat
+    └── .gitattributes
+    └── .gitignore
+    └── build_exe.py
+    └── dev.py
+    └── electron_main.js
+    └── LICENSE
+    └── main.py
+    └── package-lock.json
+    └── package.json
+    └── README.md
 ```
 
 ## Component Details

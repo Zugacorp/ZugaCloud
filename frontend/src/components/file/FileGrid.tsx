@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileItem as FileItemComponent } from './FileItem';
 import { useFileSystem } from '../../hooks/useFileSystem';
 import { FileItem as FileItemType } from '../../types/file';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Grid, List } from 'lucide-react';
 import { Button } from '../common/Button';
+import { FileGridSkeleton } from './FileGridSkeleton';
 
 interface FileGridProps {
   currentPath: string;
@@ -13,8 +14,35 @@ interface FileGridProps {
 
 export const FileGrid: React.FC<FileGridProps> = ({ currentPath, onNavigate, bucketName }) => {
   const { files, loading, error } = useFileSystem(currentPath);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedFile, setSelectedFile] = useState<number | null>(null);
 
-  console.log('FileGrid render:', { currentPath, bucketName, loading, filesCount: files.length });
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedFile === null) return;
+
+      switch (e.key) {
+        case 'ArrowRight':
+          setSelectedFile(prev => Math.min((prev || 0) + 1, files.length - 1));
+          break;
+        case 'ArrowLeft':
+          setSelectedFile(prev => Math.max((prev || 0) - 1, 0));
+          break;
+        case 'Enter':
+          if (files[selectedFile]) {
+            handleFileClick(files[selectedFile]);
+          }
+          break;
+        case 'Escape':
+          setSelectedFile(null);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedFile, files]);
 
   if (!bucketName) {
     return (
@@ -25,11 +53,7 @@ export const FileGrid: React.FC<FileGridProps> = ({ currentPath, onNavigate, buc
   }
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-      </div>
-    );
+    return <FileGridSkeleton />;
   }
 
   if (error) {
@@ -42,16 +66,14 @@ export const FileGrid: React.FC<FileGridProps> = ({ currentPath, onNavigate, buc
 
   const handleFileClick = (file: FileItemType) => {
     if (file.type === 'folder') {
-      // For folders, navigate to the new path
       const newPath = file.path.endsWith('/') ? file.path : `${file.path}/`;
       onNavigate(newPath);
     }
-    // Handle file clicks if needed
   };
 
   const handleBackClick = () => {
     const segments = currentPath.split('/').filter(Boolean);
-    segments.pop(); // Remove the last segment
+    segments.pop();
     const parentPath = segments.length ? `/${segments.join('/')}/` : '/';
     onNavigate(parentPath);
   };

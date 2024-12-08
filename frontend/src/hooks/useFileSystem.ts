@@ -8,11 +8,36 @@ function normalizePath(path: string): string {
   return path.replace(/\\/g, '/').replace(/\/+/g, '/');
 }
 
+// Add a new cache utility
+const FILE_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+interface CachedData<T> {
+  data: T;
+  timestamp: number;
+}
+
+const fileSystemCache = new Map<string, CachedData<FileItem[]>>();
+
 export const useFileSystem = (path: string) => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { config } = useConfig();
+
+  const getCachedData = () => {
+    const cached = fileSystemCache.get(path);
+    if (cached && Date.now() - cached.timestamp < FILE_CACHE_DURATION) {
+      return cached.data;
+    }
+    return null;
+  };
+
+  const setCachedData = (data: FileItem[]) => {
+    fileSystemCache.set(path, {
+      data,
+      timestamp: Date.now()
+    });
+  };
 
   const transformS3ObjectToFileItem = (item: S3Object): FileItem | null => {
     const key = item.Key || '';
@@ -90,7 +115,12 @@ export const useFileSystem = (path: string) => {
   };
 
   useEffect(() => {
-    fetchFiles();
+    const cachedFiles = getCachedData();
+    if (cachedFiles) {
+      setFiles(cachedFiles);
+    } else {
+      fetchFiles();
+    }
   }, [path]);
 
   return { files, loading, error, refreshFiles: fetchFiles };

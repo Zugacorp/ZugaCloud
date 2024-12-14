@@ -8,6 +8,7 @@ import boto3
 import asyncio
 import queue
 from urllib.parse import unquote
+from ..requests import check_health, APIException
 
 logger = logging.getLogger(__name__)
 api = Blueprint('api', __name__)
@@ -463,8 +464,12 @@ def check_credential_source():
 @api.route('/set-credential-source', methods=['POST'])
 def set_credential_source():
     try:
-        data = request.json
+        data = request.get_json()
+        logger.info(f"Received credential source update request: {data}")
+        
         use_env_vars = data.get('useEnvVars', False)
+        logger.info(f"Checking environment variables: AWS_ACCESS_KEY={bool(os.environ.get('AWS_ACCESS_KEY'))}, "
+                   f"VENV_AWS_ACCESS_KEY={bool(os.environ.get('VENV_AWS_ACCESS_KEY'))}")
         
         # Update config to reflect preference
         aws_integration.config['prefer_env_vars'] = use_env_vars
@@ -481,6 +486,17 @@ def set_credential_source():
     except Exception as e:
         logger.error(f"Error setting credential source: {e}")
         return jsonify({'error': str(e)}), 500
+
+@api.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    try:
+        return check_health()
+    except APIException as e:
+        return jsonify({'error': e.message}), e.status_code
+    except Exception as e:
+        logger.error(f"Unexpected error in health check: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 # Add error handlers
 @api.errorhandler(Exception)

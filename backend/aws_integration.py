@@ -51,25 +51,35 @@ class AWSIntegration:
 
     def initialize_s3_client(self):
         try:
-            # Check for environment variables first
-            env_access_key = os.environ.get('AWS_ACCESS_KEY')
-            env_secret_key = os.environ.get('AWS_SECRET_KEY')
+            env_access_key = os.environ.get('AWS_ACCESS_KEY') or os.environ.get('VENV_AWS_ACCESS_KEY')
+            env_secret_key = os.environ.get('AWS_SECRET_KEY') or os.environ.get('VENV_AWS_SECRET_KEY')
             
+            # If prefer_env_vars is true but no env vars are set, log a warning
+            if self.config.get('prefer_env_vars', True) and not (env_access_key and env_secret_key):
+                logger.warning("Environment variables preferred but not found: AWS_ACCESS_KEY and AWS_SECRET_KEY required")
+                self.s3 = None
+                return
+
             # Use environment variables if available, otherwise use config values
             access_key = env_access_key or self.config.get('aws_access_key')
             secret_key = env_secret_key or self.config.get('aws_secret_key')
-            region = self.config.get('region', 'us-east-2')
+            region = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region', 'us-east-2')
             
-            self.s3 = boto3.client(
-                's3',
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key,
-                region_name=region
-            )
-            
-            # Store whether we're using environment variables
-            self.using_env_vars = bool(env_access_key and env_secret_key)
-            
+            if access_key and secret_key:
+                self.s3 = boto3.client(
+                    's3',
+                    aws_access_key_id=access_key,
+                    aws_secret_access_key=secret_key,
+                    region_name=region
+                )
+                
+                # Store whether we're using environment variables
+                self.using_env_vars = bool(env_access_key and env_secret_key)
+                logger.info("AWS client initialized successfully with credentials")
+            else:
+                logger.warning("No AWS credentials available")
+                self.s3 = None
+                
         except Exception as e:
             logger.error(f"Error initializing S3 client: {e}")
             self.s3 = None

@@ -20,13 +20,24 @@ export const CredentialsForm: React.FC = () => {
         ]);
         
         setUsingEnvVars(sourceResponse.usingEnvVars);
-        setPreferEnvVars(configResponse.prefer_env_vars || false);
+        setPreferEnvVars(configResponse.prefer_env_vars ?? true);
+        
+        if (!sourceResponse.usingEnvVars && configResponse.prefer_env_vars) {
+          setError('Environment variables not found. Please set AWS_ACCESS_KEY and AWS_SECRET_KEY or disable environment variables.');
+        }
+        
+        if (!sourceResponse.usingEnvVars && !configResponse.aws_access_key) {
+          setError('Please set environment variables or disable environment variable preference to input credentials directly.');
+        }
       } catch (err) {
-        console.error('Error checking credential settings:', err);
+        setError('Failed to check credential settings');
+        console.error(err);
       }
     };
+
+    setPreferEnvVars(config.prefer_env_vars ?? true);
     checkCredentialSettings();
-  }, []);
+  }, [config]);
 
   const handlePreferEnvVarsChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const useEnv = e.target.checked;
@@ -34,29 +45,25 @@ export const CredentialsForm: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      // If enabling env vars, check if they exist first
-      if (useEnv) {
-        const envVarCheck = await api.checkCredentialSource();
-        if (!envVarCheck.usingEnvVars) {
-          setError('No environment variables found. Please set AWS_ACCESS_KEY and AWS_SECRET_KEY');
-          return;
-        }
-      }
+      // Make API call to set credential source
+      const response = await api.setCredentialSource({ useEnvVars: useEnv });
       
-      // Make API call first
-      await api.setCredentialSource({ useEnvVars: useEnv });
+      if (response.error) {
+        setError(response.error);
+        return;
+      }
       
       // Update local state after successful API call
       setPreferEnvVars(useEnv);
       setUsingEnvVars(useEnv);
       
-      // Don't reload the page, just update the state
+      // Refresh config
       const configResponse = await api.getConfig();
       updateConfig(configResponse);
       
     } catch (err) {
       console.error('Error setting credential source:', err);
-      setError('Failed to update credential source preference');
+      setError(err instanceof Error ? err.message : 'Failed to update credential source preference');
     } finally {
       setLoading(false);
     }

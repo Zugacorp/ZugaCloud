@@ -232,20 +232,20 @@ export const api = {
     }
   },
 
-  setCredentialSource: async (params: { useEnvVars: boolean }): Promise<void> => {
-    try {
-      const response = await fetch(`${API_BASE}/set-credential-source`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(params),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to set credential source');
-      }
-    } catch (error) {
-      console.error('Error setting credential source:', error);
-      throw error;
+  setCredentialSource: async (params: { useEnvVars: boolean }): Promise<any> => {
+    const response = await fetch(`${API_BASE}/set-credential-source`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update credential source');
     }
+
+    return response.json();
   }
 };

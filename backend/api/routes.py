@@ -46,6 +46,7 @@ def list_files():
         if not aws_integration.s3:
             return jsonify({'files': [], 'error': 'AWS not initialized'})
 
+        # First, list all objects to get both files and folder markers
         response = aws_integration.s3.list_objects_v2(
             Bucket=bucket,
             Prefix=path if path != '/' else '',
@@ -54,21 +55,27 @@ def list_files():
         
         files = []
         
-        # Handle folders
+        # Handle folders (including empty ones)
         if 'CommonPrefixes' in response:
             for prefix in response['CommonPrefixes']:
                 folder_name = os.path.basename(prefix['Prefix'].rstrip('/'))
                 files.append({
                     'Key': prefix['Prefix'],
-                    'Type': 'prefix',
-                    'Size': None,
-                    'Name': folder_name
+                    'Type': 'folder',  # Changed from 'prefix' to 'folder' for consistency
+                    'Size': 0,  # Set size to 0 for folders
+                    'Name': folder_name,
+                    'LastModified': None  # Folders don't have modification dates
                 })
 
         # Handle files
         if 'Contents' in response:
             for item in response['Contents']:
+                # Skip the current directory marker
                 if item['Key'].rstrip('/') == path.rstrip('/'):
+                    continue
+                
+                # Skip items that represent folders (end with /)
+                if item['Key'].endswith('/'):
                     continue
                     
                 file_name = os.path.basename(item['Key'])
@@ -84,19 +91,16 @@ def list_files():
                 if aws_integration.is_video_file(item['Key']):
                     paths = aws_integration.thumbnail_manager.get_thumbnail_paths(item['Key'])
                     
-                    # Generate thumbnails if they don't exist
                     if not os.path.exists(paths['static']):
                         aws_integration.thumbnail_manager.generate_thumbnail(item['Key'])
                     
-                    # Add static thumbnail URL
                     if os.path.exists(paths['static']):
                         file_data['thumbnailUrl'] = f'/assets/thumbnails/static/{os.path.basename(paths["static"])}'
                     
-                    # Add preview URL
                     file_data['previewUrl'] = aws_integration.generate_presigned_url(bucket, item['Key'])
-                    
+                
                 files.append(file_data)
-        
+
         return jsonify({'files': files})
     except Exception as e:
         logger.error(f"Error listing files: {str(e)}")

@@ -5,6 +5,8 @@ export interface S3Object {
   LastModified?: string;
   thumbnailUrl?: string;
   previewUrl?: string;
+  TotalSize?: number;
+  FileCount?: number;
 }
 
 export interface FileItem {
@@ -17,6 +19,8 @@ export interface FileItem {
   isVideo?: boolean;
   thumbnailUrl?: string;
   previewUrl?: string;
+  totalSize?: number;
+  fileCount?: number;
 }
 
 export interface FileWithPath extends File {

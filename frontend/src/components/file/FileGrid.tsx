@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FileItem as FileItemComponent } from './FileItem';
 import { useFileSystem } from '../../hooks/useFileSystem';
 import { FileItem as FileItemType } from '../../types/file';
-import { ChevronLeft, Grid, List } from 'lucide-react';
+import { ChevronLeft, Grid, List, RefreshCw } from 'lucide-react';
 import { Button } from '../common/Button';
 import { FileGridSkeleton } from './FileGridSkeleton';
 
@@ -13,7 +13,7 @@ interface FileGridProps {
 }
 
 export const FileGrid: React.FC<FileGridProps> = ({ currentPath, onNavigate, bucketName }) => {
-  const { files, loading, error } = useFileSystem(currentPath);
+  const { files, loading, error, refreshFiles } = useFileSystem(currentPath);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
 

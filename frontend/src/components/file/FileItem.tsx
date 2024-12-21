@@ -129,6 +129,26 @@ export const FileItem: React.FC<FileItemProps> = ({ file, onClick }) => {
     }
   };
 
+  const renderSize = () => {
+    if (file.type === 'folder') {
+      // Always show 0 B if no size is available
+      const size = file.totalSize || 0;
+      const count = file.fileCount || 0;
+      return (
+        <div className="text-xs text-gray-400 text-center">
+          {formatFileSize(size)}
+          {count > 0 && ` • ${count} ${count === 1 ? 'file' : 'files'}`}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="text-xs text-gray-400 text-center">
+        {formatFileSize(file.size || 0)}
+      </div>
+    );
+  };
+
   return (
     <div className="group cursor-pointer">
       <div 
@@ -169,15 +189,11 @@ export const FileItem: React.FC<FileItemProps> = ({ file, onClick }) => {
           )}
         </div>
         
-        <div className="text-sm truncate text-center text-gray-100">
+        <div className="text-sm truncate text-center text-gray-100 mb-1">
           {file.name}
         </div>
         
-        {file.size && file.type !== 'folder' && (
-          <div className="text-xs text-gray-400 text-center">
-            {formatFileSize(file.size)}
-          </div>
-        )}
+        {renderSize()}
       </div>
       <ContextMenu
         file={file}

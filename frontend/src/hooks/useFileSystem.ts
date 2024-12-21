@@ -18,6 +18,11 @@ interface CachedData<T> {
 
 const fileSystemCache = new Map<string, CachedData<FileItem[]>>();
 
+// Add this function to clear cache
+const clearCache = () => {
+  fileSystemCache.clear();
+};
+
 export const useFileSystem = (path: string) => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +45,7 @@ export const useFileSystem = (path: string) => {
   };
 
   const transformS3ObjectToFileItem = (item: S3Object): FileItem | null => {
+    console.log('Transforming S3 object:', item);
     const key = item.Key || '';
     const normalizedPath = normalizePath(path).startsWith('/') 
       ? normalizePath(path).slice(1) 
@@ -67,9 +73,21 @@ export const useFileSystem = (path: string) => {
     const extension = !isFolder ? name.split('.').pop()?.toLowerCase() : undefined;
     const isVideo = extension ? /^(mp4|mov|avi|wmv|flv|webm|mkv|mpeg|mpg|m4v|3gp)$/i.test(extension) : false;
 
+    if (isFolder) {
+      console.log(`Folder ${name} has size ${item.TotalSize} and contains ${item.FileCount} files`);
+      return {
+        name,
+        type: 'folder',
+        path: key,
+        totalSize: item.TotalSize || 0,
+        fileCount: item.FileCount || 0,
+        lastModified: item.LastModified
+      };
+    }
+
     return {
       name,
-      type: isFolder ? 'folder' : 'file',
+      type: 'file',
       size: item.Size,
       lastModified: item.LastModified,
       path: key,
@@ -83,6 +101,7 @@ export const useFileSystem = (path: string) => {
   const fetchFiles = async () => {
     try {
       setLoading(true);
+      clearCache(); // Clear cache before fetching new data
       console.log('Fetching files for path:', path);
       const response = await api.listFiles(path, config.bucket_name);
       console.log('Received response:', response);
@@ -95,7 +114,7 @@ export const useFileSystem = (path: string) => {
       
       const processedItems = response.files
         .map(transformS3ObjectToFileItem)
-        .filter((item): item is FileItem => item !== null) // Filter out null items
+        .filter((item: FileItem | null): item is FileItem => item !== null)
         .sort((a: FileItem, b: FileItem) => {
           if (a.type === 'folder' && b.type !== 'folder') return -1;
           if (a.type !== 'folder' && b.type === 'folder') return 1;

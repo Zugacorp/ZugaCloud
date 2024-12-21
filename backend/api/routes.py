@@ -59,12 +59,14 @@ def list_files():
         if 'CommonPrefixes' in response:
             for prefix in response['CommonPrefixes']:
                 folder_name = os.path.basename(prefix['Prefix'].rstrip('/'))
+                total_size, file_count = aws_integration.calculate_folder_stats(bucket, prefix['Prefix'])
                 files.append({
                     'Key': prefix['Prefix'],
-                    'Type': 'folder',  # Changed from 'prefix' to 'folder' for consistency
-                    'Size': 0,  # Set size to 0 for folders
+                    'Type': 'folder',
+                    'TotalSize': total_size,
+                    'FileCount': file_count,
                     'Name': folder_name,
-                    'LastModified': None  # Folders don't have modification dates
+                    'LastModified': None
                 })
 
         # Handle files

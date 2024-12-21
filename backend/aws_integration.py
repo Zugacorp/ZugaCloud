@@ -205,5 +205,24 @@ class AWSIntegration:
             logger.error(f"Error comparing local and remote contents: {e}")
             raise
 
+    def calculate_folder_stats(self, bucket: str, prefix: str) -> tuple[int, int]:
+        """Calculate total size and file count for a folder prefix."""
+        total_size = 0
+        file_count = 0
+        
+        try:
+            paginator = self.s3.get_paginator('list_objects_v2')
+            for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+                if 'Contents' in page:
+                    for obj in page['Contents']:
+                        if not obj['Key'].endswith('/'):  # Skip folder markers
+                            total_size += obj['Size']
+                            file_count += 1
+            
+            return total_size, file_count
+        except Exception as e:
+            logger.error(f"Error calculating folder stats for {prefix}: {e}")
+            return 0, 0
+
 # Create a single instance
 aws_integration = AWSIntegration()

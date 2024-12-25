@@ -3,10 +3,16 @@ import time
 import sys
 import subprocess
 import platform
-import pkg_resources
+from importlib.metadata import version
 import json
 import venv
 from pathlib import Path
+import logging
+import shutil
+
+# Configure logging at the start of your script
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 REQUIRED_PYTHON_PACKAGES = {
     'flask': 'Flask',
@@ -60,6 +66,7 @@ def create_venv():
         
     except Exception as e:
         print(f"Error creating virtual environment: {str(e)}")
+        logger.exception("Detailed traceback:")
         sys.exit(1)
 
 def check_python_dependencies():
@@ -70,10 +77,12 @@ def check_python_dependencies():
     for package, import_name in REQUIRED_PYTHON_PACKAGES.items():
         try:
             __import__(import_name)
-            version = pkg_resources.get_distribution(package).version
-            installed.append(f"{package} ({version})")
+            pkg_version = version(package)
+            installed.append(f"{package} ({pkg_version})")
         except ImportError:
             missing.append(package)
+        except Exception:  # Handle case where package is installed but version can't be determined
+            installed.append(f"{package} (version unknown)")
     
     if installed:
         print("Installed packages:")
@@ -245,25 +254,33 @@ def wait_for_flask():
 
 def run_electron():
     """Run Electron application."""
-    print("Starting Electron application...")
+    logger.info("Starting Electron application...")
     frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
-    
+
+    # Find npm executable
+    npm_command = shutil.which('npm')
+    if npm_command is None:
+        logger.error("npm command not found. Please ensure npm is installed and in your PATH.")
+        sys.exit(1)
+    else:
+        logger.info(f"Found npm at: {npm_command}")
+
     # Ensure electron/src directory exists
     electron_src_dir = os.path.join(frontend_dir, 'electron', 'src')
     os.makedirs(electron_src_dir, exist_ok=True)
-    
+
     # Run Vite in development mode
-    print("Starting Vite development server...")
-    vite_process = subprocess.Popen('npm run dev', shell=True, cwd=frontend_dir)
-    
+    logger.info("Starting Vite development server...")
+    vite_process = subprocess.Popen([npm_command, 'run', 'dev'], cwd=frontend_dir)
+
     # Wait for Vite to start
-    print("Waiting for Vite server to start...")
-    time.sleep(2)
-    
+    logger.info("Waiting for Vite server to start...")
+    time.sleep(5)  # Increase wait time if necessary
+
     try:
         # Start Electron
-        print("Starting Electron...")
-        subprocess.run('npm run electron-dev', shell=True, cwd=frontend_dir)
+        logger.info("Starting Electron...")
+        subprocess.run([npm_command, 'run', 'electron-dev'], cwd=frontend_dir)
     finally:
         vite_process.terminate()
 

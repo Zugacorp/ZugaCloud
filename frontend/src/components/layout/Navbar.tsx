@@ -5,6 +5,7 @@ import { useConfig } from '../../hooks/useConfig';
 import { BucketSelector } from '../aws/BucketSelector';
 import { api } from '../../api/client';
 import { useElectronFolder } from '../../hooks/useElectronFolder';
+import { LoadingSpinner } from '../common/LoadingSpinner';
 
 const isElectron = Boolean(window.electronAPI);
 
@@ -44,7 +45,7 @@ export const Navbar = () => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

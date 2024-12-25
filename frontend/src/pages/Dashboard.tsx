@@ -6,15 +6,19 @@ export const Dashboard: React.FC = () => {
   const { loading, config } = useConfig();
   const [currentPath, setCurrentPath] = useState('/');
 
-  console.log('Dashboard render:', { loading, config, currentPath });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Dashboard render:', { loading, config, currentPath });
+  }
+
+  // Create a LoadingSpinner component
+  const LoadingSpinner = () => (
+    <div className="flex items-center justify-center min-h-screen bg-[#0a192f]">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+    </div>
+  );
 
   if (loading) {
-    console.log('Dashboard is loading');
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a192f]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

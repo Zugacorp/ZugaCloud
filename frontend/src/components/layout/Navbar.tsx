@@ -45,7 +45,7 @@ export const Navbar = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <div>Loading...</div>;
   }
 
   return (

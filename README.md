@@ -1,4 +1,4 @@
-# ZugaCloud - Infinite Video Storage
+# ZugaCloud -  AWS Video Storage
 
 A desktop application built with Python, Flask, React, and Electron for seamless video storage and synchronization with AWS S3.
 

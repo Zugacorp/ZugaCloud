@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Settings } from './pages/Settings';
@@ -10,14 +10,14 @@ import 'react-toastify/dist/ReactToastify.css';
 const App: React.FC = () => {
   return (
     <SyncProvider>
-      <BrowserRouter>
+      <Router>
         <Layout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </Layout>
-      </BrowserRouter>
+      </Router>
       <ToastContainer position="bottom-right" />
     </SyncProvider>
   );

@@ -16,11 +16,9 @@ def initialize_aws():
         logger.info(f"Config loaded with region: {config.get('region')}")
         logger.info(f"AWS access key present: {'Yes' if config.get('aws_access_key') else 'No'}")
         
-        aws = AWSIntegration(
-            access_key=config.get('aws_access_key'),
-            secret_key=config.get('aws_secret_key'),
-            region=config.get('region', 'us-east-2')
-        )
+        # Create AWS integration instance
+        aws = AWSIntegration(config)
+        
         return aws
     except Exception as e:
         logger.error(f"Error in initialize_aws: {str(e)}")

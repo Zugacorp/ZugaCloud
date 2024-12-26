@@ -23,14 +23,24 @@ function createWindow() {
     }
   });
 
-  // Enable remote module
   enable(mainWindow.webContents);
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadURL('http://localhost:5000');
+  // Determine the correct path to load
+  const isDev = process.env.NODE_ENV === 'development';
+  const url = isDev 
+    ? 'http://localhost:5173'  // Vite dev server port
+    : `file://${path.join(__dirname, '../../dist/index.html')}`; // Production build path
+
+  try {
+    mainWindow.loadURL(url);
+    console.log('Loading URL:', url);
+    
+    if (isDev) {
+      mainWindow.webContents.openDevTools();
+    }
+  } catch (err) {
+    console.error('Failed to load URL:', err);
+    app.quit();
   }
 }
 

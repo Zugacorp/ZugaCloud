@@ -9,11 +9,13 @@ from .thumbnail_manager import ThumbnailManager
 logger = logging.getLogger(__name__)
 
 class AWSIntegration:
-    def __init__(self):
+    def __init__(self, config=None):
+        """Initialize AWS integration with optional config"""
         self.s3 = None
-        self.config = self.load_config()
+        self.config = config if config is not None else self.load_config()
         self._bucket_name = self.config.get('bucket_name')
         self.initialize_s3_client()
+        from .thumbnail_manager import ThumbnailManager
         self.thumbnail_manager = ThumbnailManager(self)
 
     @property
@@ -51,19 +53,33 @@ class AWSIntegration:
 
     def initialize_s3_client(self):
         try:
-            env_access_key = os.environ.get('AWS_ACCESS_KEY') or os.environ.get('VENV_AWS_ACCESS_KEY')
-            env_secret_key = os.environ.get('AWS_SECRET_KEY') or os.environ.get('VENV_AWS_SECRET_KEY')
+            # Check all possible environment variable combinations
+            env_access_key = (os.environ.get('AWS_ACCESS_KEY') or 
+                             os.environ.get('VENV_AWS_ACCESS_KEY') or 
+                             os.environ.get('AWS_ACCESS_KEY_ID'))
             
-            # If prefer_env_vars is true but no env vars are set, log a warning
-            if self.config.get('prefer_env_vars', True) and not (env_access_key and env_secret_key):
-                logger.warning("Environment variables preferred but not found: AWS_ACCESS_KEY and AWS_SECRET_KEY required")
-                self.s3 = None
-                return
-
+            env_secret_key = (os.environ.get('AWS_SECRET_KEY') or 
+                             os.environ.get('VENV_AWS_SECRET_KEY') or 
+                             os.environ.get('AWS_SECRET_ACCESS_KEY'))
+            
+            env_region = (os.environ.get('AWS_DEFAULT_REGION') or 
+                         os.environ.get('VENV_AWS_DEFAULT_REGION') or 
+                         'us-east-2')
+            
+            # Log environment variable status (without exposing values)
+            logger.info(f"Environment variables present: Access Key: {bool(env_access_key)}, "
+                       f"Secret Key: {bool(env_secret_key)}, Region: {bool(env_region)}")
+            
+            if self.config.get('prefer_env_vars', True):
+                if not (env_access_key and env_secret_key):
+                    logger.warning("Environment variables preferred but not found")
+                    self.s3 = None
+                    return
+            
             # Use environment variables if available, otherwise use config values
             access_key = env_access_key or self.config.get('aws_access_key')
             secret_key = env_secret_key or self.config.get('aws_secret_key')
-            region = os.environ.get('AWS_DEFAULT_REGION') or self.config.get('region', 'us-east-2')
+            region = env_region or self.config.get('region', 'us-east-2')
             
             if access_key and secret_key:
                 self.s3 = boto3.client(
@@ -72,14 +88,12 @@ class AWSIntegration:
                     aws_secret_access_key=secret_key,
                     region_name=region
                 )
-                
-                # Store whether we're using environment variables
                 self.using_env_vars = bool(env_access_key and env_secret_key)
-                logger.info("AWS client initialized successfully with credentials")
+                logger.info("AWS client initialized successfully")
             else:
                 logger.warning("No AWS credentials available")
                 self.s3 = None
-                
+
         except Exception as e:
             logger.error(f"Error initializing S3 client: {e}")
             self.s3 = None
@@ -223,6 +237,17 @@ class AWSIntegration:
         except Exception as e:
             logger.error(f"Error calculating folder stats for {prefix}: {e}")
             return 0, 0
+
+    async def initialize(self):
+        """Async initialization of AWS integration"""
+        try:
+            # Initialize S3 client if not already done
+            if not self.s3:
+                self.initialize_s3_client()
+            return True
+        except Exception as e:
+            logger.error(f"Error in async initialization: {e}")
+            return False
 
 # Create a single instance
 aws_integration = AWSIntegration()

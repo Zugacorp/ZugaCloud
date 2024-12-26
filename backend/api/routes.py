@@ -11,9 +11,9 @@ from urllib.parse import unquote
 from ..requests import check_health, APIException
 
 logger = logging.getLogger(__name__)
-api = Blueprint('api', __name__)
+api_bp = Blueprint('api', __name__)
 
-@api.route('/config', methods=['GET'])
+@api_bp.route('/config', methods=['GET'])
 def get_config():
     try:
         config = aws_integration.config
@@ -22,7 +22,7 @@ def get_config():
         logger.error(f"Error getting config: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/buckets', methods=['GET'])
+@api_bp.route('/buckets', methods=['GET'])
 def list_buckets():
     try:
         if not aws_integration.s3:
@@ -35,7 +35,7 @@ def list_buckets():
         logger.error(f"Error listing buckets: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/files', methods=['GET'])
+@api_bp.route('/files', methods=['GET'])
 def list_files():
     try:
         path = request.args.get('path', '/')
@@ -108,7 +108,7 @@ def list_files():
         logger.error(f"Error listing files: {str(e)}")
         return jsonify({'files': [], 'error': str(e)})
 
-@api.route('/files/stream/<path:file_key>')
+@api_bp.route('/files/stream/<path:file_key>')
 def stream_file(file_key):
     try:
         bucket_name = aws_integration.config.get('bucket_name')
@@ -129,7 +129,7 @@ def stream_file(file_key):
         logger.error(f"Error generating streaming URL: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/select-folder', methods=['POST'])
+@api_bp.route('/select-folder', methods=['POST'])
 def select_folder():
     try:
         data = request.json
@@ -151,7 +151,7 @@ def select_folder():
         logger.error(f"Error selecting folder: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/validate-credentials', methods=['POST'])
+@api_bp.route('/validate-credentials', methods=['POST'])
 def validate_credentials():
     try:
         credentials = request.json
@@ -190,7 +190,7 @@ def validate_credentials():
             'message': str(e)
         }), 400
 
-@api.route('/config', methods=['POST'])
+@api_bp.route('/config', methods=['POST'])
 def update_config():
     try:
         new_config = request.json
@@ -213,7 +213,7 @@ def update_config():
         logger.error(f"Error updating config: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/assets/thumbnails/<type>/<path:filename>')
+@api_bp.route('/assets/thumbnails/<type>/<path:filename>')
 def serve_thumbnail(type, filename):
     """Serve thumbnail files"""
     try:
@@ -233,7 +233,7 @@ def serve_thumbnail(type, filename):
         logger.error(f"Error serving thumbnail {filename}: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/sync/start', methods=['POST'])
+@api_bp.route('/sync/start', methods=['POST'])
 def start_sync():
     try:
         data = request.json
@@ -281,7 +281,7 @@ def start_sync():
         logger.error(f"Error starting sync: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/sync/status', methods=['GET'])
+@api_bp.route('/sync/status', methods=['GET'])
 def get_sync_status():
     try:
         status = {}
@@ -316,7 +316,7 @@ def get_sync_status():
             "message": str(e)
         }), 500
 
-@api.route('/files/info', methods=['GET'])
+@api_bp.route('/files/info', methods=['GET'])
 def get_file_info():
     """Get detailed file information including sync status."""
     try:
@@ -353,7 +353,7 @@ def get_file_info():
         logger.error(f"Error getting file info: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/sync/stop', methods=['POST'])
+@api_bp.route('/sync/stop', methods=['POST'])
 def stop_sync():
     try:
         # Initialize FileSync if needed
@@ -375,7 +375,7 @@ def stop_sync():
             "message": f"Error: {str(e)}"
         }), 500
 
-@api.route('/files/local', methods=['DELETE'])
+@api_bp.route('/files/local', methods=['DELETE'])
 def delete_local_file():
     try:
         data = request.json
@@ -405,7 +405,7 @@ def delete_local_file():
         logger.error(f"Error deleting local file: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/files/s3', methods=['DELETE'])
+@api_bp.route('/files/s3', methods=['DELETE'])
 def delete_s3_file():
     try:
         data = request.json
@@ -433,7 +433,7 @@ def delete_s3_file():
         logger.error(f"Error deleting S3 file: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/files/local/check', methods=['POST'])
+@api_bp.route('/files/local/check', methods=['POST'])
 def check_local_file():
     try:
         data = request.json
@@ -455,7 +455,7 @@ def check_local_file():
         logger.error(f"Error checking local file: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/check-credential-source', methods=['GET'])
+@api_bp.route('/check-credential-source', methods=['GET'])
 def check_credential_source():
     try:
         using_env_vars = bool(
@@ -467,7 +467,7 @@ def check_credential_source():
         logger.error(f"Error checking credential source: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/set-credential-source', methods=['POST'])
+@api_bp.route('/set-credential-source', methods=['POST'])
 def set_credential_source():
     try:
         data = request.get_json()
@@ -493,7 +493,7 @@ def set_credential_source():
         logger.error(f"Error setting credential source: {e}")
         return jsonify({'error': str(e)}), 500
 
-@api.route('/health', methods=['GET'])
+@api_bp.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     try:
@@ -505,7 +505,7 @@ def health_check():
         return jsonify({'error': 'Internal server error'}), 500
 
 # Add error handlers
-@api.errorhandler(Exception)
+@api_bp.errorhandler(Exception)
 def handle_error(error):
     logger.error(f"Unhandled error: {str(error)}")
     return jsonify({'error': str(error)}), 500

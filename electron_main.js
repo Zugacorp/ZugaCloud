@@ -1,4 +1,3 @@
-
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
@@ -8,7 +7,8 @@ function createWindow() {
         height: 800,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            preload: path.join(__dirname, 'preload.cjs')
         }
     });
 
@@ -26,15 +26,19 @@ function createWindow() {
         throw new Error(`Failed to load URL after ${retries} attempts`);
     };
 
-    // Load the Flask app with retry
-    loadURLWithRetry('http://localhost:5000')
+    // Determine the correct URL based on environment
+    const isDev = process.env.NODE_ENV === 'development';
+    const url = isDev 
+        ? 'http://localhost:5173'  // Vite dev server
+        : `file://${path.join(__dirname, 'dist', 'index.html')}`; // Production build
+
+    loadURLWithRetry(url)
         .catch(err => {
             console.error('Failed to load application:', err);
             app.quit();
         });
     
-    // Open DevTools in development
-    if (process.env.NODE_ENV === 'development') {
+    if (isDev) {
         win.webContents.openDevTools();
     }
 }

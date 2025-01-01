@@ -9,6 +9,7 @@ import asyncio
 import queue
 from urllib.parse import unquote
 from ..requests import check_health, APIException
+from .auth import require_auth
 
 logger = logging.getLogger(__name__)
 api_bp = Blueprint('api', __name__)
@@ -503,6 +504,21 @@ def health_check():
     except Exception as e:
         logger.error(f"Unexpected error in health check: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@api_bp.route('/')
+@require_auth
+def root():
+    """Protected root route that requires authentication"""
+    return jsonify({
+        'message': 'Authenticated successfully',
+        'user': request.user,
+        'features': [
+            'AWS S3 Integration',
+            'Video File Management',
+            'Thumbnail Generation',
+            'Sync Status Monitoring'
+        ]
+    })
 
 # Add error handlers
 @api_bp.errorhandler(Exception)

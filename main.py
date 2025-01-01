@@ -3,13 +3,17 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from backend.api.routes import api
+from backend.auth import init_auth
 import logging
 
 logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, supports_credentials=True)  # Enable credentials for auth
+    
+    # Initialize authentication
+    oauth, login_required = init_auth(app)
     
     # Register error handlers
     @app.errorhandler(Exception)

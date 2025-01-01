@@ -1,17 +1,6 @@
-export interface S3Object {
-  Key: string;
-  Type: 'prefix' | 'object';
-  Size?: number;
-  LastModified?: string;
-  thumbnailUrl?: string;
-  previewUrl?: string;
-  TotalSize?: number;
-  FileCount?: number;
-}
-
-export interface FileItem {
+export interface FileInfo {
   name: string;
-  type: 'folder' | 'file';
+  type: 'file' | 'folder';
   size?: number;
   lastModified?: string;
   path: string;
@@ -21,6 +10,17 @@ export interface FileItem {
   previewUrl?: string;
   totalSize?: number;
   fileCount?: number;
+}
+
+export interface S3Object {
+  Key: string;
+  Size?: number;
+  LastModified?: string;
+  Type?: 'prefix' | 'object';
+  FileCount?: number;
+  TotalSize?: number;
+  thumbnailUrl?: string;
+  previewUrl?: string;
 }
 
 export interface FileWithPath extends File {

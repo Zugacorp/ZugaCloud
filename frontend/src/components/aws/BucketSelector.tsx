@@ -1,51 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { useConfig } from '../../hooks/useConfig';
-import { api } from '../../api/client';
+import { useState, useEffect } from 'react'
+import { useConfig } from '../../contexts/ConfigContext'
+import { api } from '../../api/client'
 
-export const BucketSelector: React.FC = () => {
-  const { config, updateConfig, loading: configLoading } = useConfig();
-  const [buckets, setBuckets] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+interface Bucket {
+  Name: string
+  CreationDate: string
+}
+
+export function BucketSelector() {
+  const { config } = useConfig()
+  const [buckets, setBuckets] = useState<Bucket[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadBuckets();
-  }, []);
+    loadBuckets()
+  }, [])
 
   const loadBuckets = async () => {
     try {
-      setLoading(true);
-      const data = await api.listBuckets();
-      console.log('Available buckets:', data);
-      setBuckets(data);
-      
-      if (data.includes('zugaarchive') && !config.bucket_name) {
-        await handleBucketChange('zugaarchive');
-      }
+      setLoading(true)
+      const data = await api.listBuckets()
+      setBuckets(data.buckets)
+      setError(null)
     } catch (err) {
-      console.error('Failed to load buckets:', err);
-      alert('Failed to load buckets. Please check your AWS credentials in settings.');
+      setError(err instanceof Error ? err.message : 'Failed to load buckets')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const handleBucketChange = async (bucket: string) => {
-    await updateConfig({ bucket_name: bucket });
-  };
+  const handleBucketSelect = async (bucketName: string) => {
+    try {
+      setLoading(true)
+      await api.updateConfig({
+        ...config,
+        bucket_name: bucketName,
+      })
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to select bucket')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   return (
-    <select
-      className="w-full px-3 py-2 bg-[#112240] border border-[#233554] rounded-md text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-      value={config.bucket_name || ''}
-      onChange={(e) => handleBucketChange(e.target.value)}
-      disabled={loading || configLoading}
-    >
-      <option value="">Select bucket...</option>
-      {buckets.map(bucket => (
-        <option key={bucket} value={bucket} className="bg-[#0a192f]">
-          {bucket}
-        </option>
-      ))}
-    </select>
-  );
-};
+    <div>
+      <h2>Select S3 Bucket</h2>
+      {error && <div className="error">{error}</div>}
+      <select
+        value={config.bucket_name || ''}
+        onChange={(e) => handleBucketSelect(e.target.value)}
+        disabled={loading}
+      >
+        <option value="">Select a bucket</option>
+        {buckets.map((bucket) => (
+          <option key={bucket.Name} value={bucket.Name}>
+            {bucket.Name}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}

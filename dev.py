@@ -19,8 +19,19 @@ for package in installed_packages:
 # Load environment variables
 load_dotenv()
 
+def rebuild_frontend():
+    """Rebuild the frontend application"""
+    print("Rebuilding frontend...")
+    os.chdir('frontend')
+    subprocess.run(['npm', 'run', 'build'], shell=True)
+    os.chdir('..')
+    print("Frontend rebuild complete")
+
 def run_frontend():
     """Run the frontend development server"""
+    # First rebuild the frontend
+    rebuild_frontend()
+    # Then start the development server
     os.chdir('frontend')
     subprocess.run(['npm', 'run', 'electron:dev'], shell=True)
 

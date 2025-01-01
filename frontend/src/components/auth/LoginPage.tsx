@@ -9,12 +9,30 @@ import { useAuth } from '@/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const { config, loading: configLoading, error: configError } = useConfig()
   const { isAuthenticated, user, isLoading: authLoading, clearAuth } = useAuth()
   const navigate = useNavigate()
+
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
+  })
 
   // Clear auth state on mount
   useEffect(() => {
@@ -29,26 +47,34 @@ export function LoginPage() {
     }
   }, [isAuthenticated, user, authLoading, navigate])
 
-  const handleCognitoLogin = async () => {
+  const handleLogin = async (data: LoginFormData) => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/auth/login')
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password
+        })
+      })
       
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to initiate login')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Login failed')
       }
 
-      // Get the redirect URL from the response
-      const data = await response.json()
-      if (data.login_url) {
-        window.location.href = data.login_url
+      const responseData = await response.json()
+      if (responseData.success) {
+        navigate('/dashboard', { replace: true })
       } else {
-        throw new Error('No login URL provided')
+        throw new Error('Login failed')
       }
     } catch (error) {
       console.error('Login error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to initiate login')
+      toast.error(error instanceof Error ? error.message : 'Failed to login')
     } finally {
       setIsLoading(false)
     }
@@ -89,26 +115,43 @@ export function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            <Button
-              variant="outline"
-              onClick={handleCognitoLogin}
-              disabled={isLoading}
-              className="w-full"
-            >
+          <form onSubmit={form.handleSubmit(handleLogin)} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                {...form.register('email')}
+                disabled={isLoading}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                {...form.register('password')}
+                disabled={isLoading}
+              />
+              {form.formState.errors.password && (
+                <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
+              )}
+            </div>
+            <Button type="submit" disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Connecting...
+                  Signing in...
                 </>
               ) : (
-                <>
-                  <Icons.aws className="mr-2 h-4 w-4" />
-                  Continue with AWS Cognito
-                </>
+                'Sign In'
               )}
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>

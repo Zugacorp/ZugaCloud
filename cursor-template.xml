@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <!-- React Component Templates -->
+    <template id="react-component" description="Create a new React functional component">
+        <content><![CDATA[
+import { FC } from 'react'
+import { cn } from '@/lib/utils'
+
+interface ${ComponentName}Props {
+    className?: string
+    children?: React.ReactNode
+}
+
+export const ${ComponentName}: FC<${ComponentName}Props> = ({
+    className,
+    children,
+    ...props
+}) => {
+    return (
+        <div className={cn('', className)} {...props}>
+            {children}
+        </div>
+    )
+}
+        ]]></content>
+    </template>
+
+    <!-- Next.js Page Template -->
+    <template id="next-page" description="Create a new Next.js page component">
+        <content><![CDATA[
+import { Metadata } from 'next'
+import { PageProps } from '@/types'
+
+export const metadata: Metadata = {
+    title: '${PageTitle}',
+    description: '${PageDescription}'
+}
+
+export default async function ${PageName}({ params }: PageProps) {
+    return (
+        <main className="container">
+            <h1>${PageTitle}</h1>
+        </main>
+    )
+}
+        ]]></content>
+    </template>
+
+    <!-- API Route Template -->
+    <template id="api-route" description="Create a new Next.js API route">
+        <content><![CDATA[
+import { NextResponse } from 'next/server'
+import { z } from 'zod'
+import { withErrorHandling } from '@/lib/error-handling'
+
+const requestSchema = z.object({
+    // Define your request schema here
+})
+
+export const POST = withErrorHandling(async (req: Request) => {
+    const data = await req.json()
+    const validated = requestSchema.parse(data)
+    
+    // Your route logic here
+    
+    return NextResponse.json({ success: true })
+})
+        ]]></content>
+    </template>
+
+    <!-- Python Flask Route Template -->
+    <template id="flask-route" description="Create a new Flask route">
+        <content><![CDATA[
+from flask import Blueprint, request, jsonify
+from http import HTTPStatus
+from typing import Dict, Any
+
+${blueprint_name} = Blueprint('${blueprint_name}', __name__)
+
+@${blueprint_name}.route('/${route_path}', methods=['${methods}'])
+def ${route_handler}() -> tuple[Dict[str, Any], int]:
+    """
+    ${route_description}
+    
+    Returns:
+        tuple[Dict[str, Any], int]: Response data and HTTP status code
+    """
+    try:
+        # Your route logic here
+        return jsonify({
+            'status': 'success',
+            'data': {}
+        }), HTTPStatus.OK
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), HTTPStatus.INTERNAL_SERVER_ERROR
+        ]]></content>
+    </template>
+
+    <!-- Database Model Template -->
+    <template id="db-model" description="Create a new database model">
+        <content><![CDATA[
+from datetime import datetime
+from typing import Optional
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+
+from app.database import Base
+
+class ${ModelName}(Base):
+    """
+    ${model_description}
+    """
+    __tablename__ = '${table_name}'
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Add your columns here
+    
+    def __repr__(self) -> str:
+        return f"<${ModelName}(id={self.id})>"
+        ]]></content>
+    </template>
+
+    <!-- Test Template -->
+    <template id="test-file" description="Create a new test file">
+        <content><![CDATA[
+import pytest
+from typing import Generator
+
+@pytest.fixture
+def ${fixture_name}() -> Generator:
+    # Setup
+    yield
+    # Teardown
+
+def test_${test_name}(${fixture_name}):
+    """
+    Test case for ${test_description}
+    """
+    # Arrange
+    
+    # Act
+    
+    # Assert
+    assert True
+        ]]></content>
+    </template>
+
+    <!-- Custom Hook Template -->
+    <template id="react-hook" description="Create a new React custom hook">
+        <content><![CDATA[
+import { useState, useEffect } from 'react'
+
+interface ${HookName}Options {
+    // Add your options here
+}
+
+interface ${HookName}Result {
+    // Add your result type here
+}
+
+export function ${hookName}(options: ${HookName}Options): ${HookName}Result {
+    // Add your hook logic here
+    
+    return {
+        // Return your result
+    }
+}
+        ]]></content>
+    </template>
+
+    <!-- Error Boundary Template -->
+    <template id="error-boundary" description="Create a new Error Boundary component">
+        <content><![CDATA[
+'use client'
+
+import { Component, ErrorInfo, ReactNode } from 'react'
+
+interface Props {
+    children?: ReactNode
+    fallback?: ReactNode
+}
+
+interface State {
+    hasError: boolean
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+    public state: State = {
+        hasError: false
+    }
+
+    public static getDerivedStateFromError(_: Error): State {
+        return { hasError: true }
+    }
+
+    public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+        console.error('Uncaught error:', error, errorInfo)
+    }
+
+    public render() {
+        if (this.state.hasError) {
+            return this.props.fallback || <div>Something went wrong</div>
+        }
+
+        return this.props.children
+    }
+}
+        ]]></content>
+    </template>
+</templates> 

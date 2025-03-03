@@ -168,9 +168,26 @@ backend/config/config.json
 
 # Environment files
 .env
-.env.local
-.env.development
-.env.production
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Electron
+frontend/dist-electron/
+frontend/.vite/
+
+# Cache directories
+.cache/
+frontend/.cache/
+backend/.cache/
 
 # Dependencies
 node_modules/

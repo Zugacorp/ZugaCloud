@@ -1,0 +1,7 @@
+{
+    "storage_provider": "storj",
+    "storj_access_key": "jvz2ncxabzwzjoic2af5fc5ndzrq",
+    "storj_secret_key": "j3gbqyvbjji5h7uxjnullqj3ng7f5tswquknwpdxsfa3wtmtkazie",
+    "storj_endpoint": "https://gateway.us1.storjshare.io",
+    "bucket_name": "zugacloud"
+} 

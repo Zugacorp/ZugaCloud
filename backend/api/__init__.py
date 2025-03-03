@@ -3,6 +3,7 @@ from flask_cors import CORS
 import os
 import logging
 from dotenv import load_dotenv
+from ..auth import auth_bp
 
 # Load environment variables from .env file
 load_dotenv()
@@ -13,7 +14,12 @@ logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    
+    # Set the secret key from environment or generate a secure one
+    app.secret_key = os.environ.get('FLASK_SECRET_KEY') or os.urandom(24)
+    
+    # Enable CORS
+    CORS(app, supports_credentials=True)
 
     # Configure Cognito settings
     try:
@@ -46,7 +52,6 @@ def create_app():
         raise
 
     # Register blueprints
-    from .auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
     return app

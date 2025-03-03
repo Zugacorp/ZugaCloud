@@ -11,15 +11,16 @@ export function useElectronFolder(): FolderSelection {
   const [error, setError] = useState<Error | null>(null);
 
   const selectFolder = async (): Promise<string | null> => {
-    if (!window.electronAPI) {
-      throw new Error('Electron API not available');
+    if (!window.electron) {
+      console.error('Electron API not available');
+      return null;
     }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await window.electronAPI.selectFolder();
+      const result = await window.electron.selectFolder();
       return result.success && result.path ? result.path : null;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to select folder');

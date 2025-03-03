@@ -8,8 +8,10 @@ export interface FileInfo {
   isVideo?: boolean;
   thumbnailUrl?: string;
   previewUrl?: string;
-  totalSize?: number;
-  fileCount?: number;
+  totalSize?: number;  // Total size for folders
+  fileCount?: number;  // Number of files in folder
+  isProcessing?: boolean;
+  error?: string;
 }
 
 export interface S3Object {
@@ -21,6 +23,8 @@ export interface S3Object {
   TotalSize?: number;
   thumbnailUrl?: string;
   previewUrl?: string;
+  isProcessing?: boolean;
+  error?: string;
 }
 
 export interface FileWithPath extends File {

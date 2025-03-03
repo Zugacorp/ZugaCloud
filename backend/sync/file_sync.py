@@ -4,9 +4,6 @@ import sys
 import subprocess
 import tempfile
 import shutil
-import win32security
-import win32api
-import win32con
 import os
 import threading
 import boto3
@@ -14,6 +11,12 @@ from botocore.exceptions import ClientError
 import logging
 import hashlib
 from .sync_queue import sync_queue  # Import the shared queue
+
+# Windows-specific imports
+if os.name == 'nt':  # Only import on Windows
+    import win32security
+    import win32api
+    import win32con
 
 logger = logging.getLogger(__name__)
 
@@ -162,13 +165,15 @@ exit /b 0
     def check_admin_privileges(self):
         """Check if the program has admin privileges."""
         try:
-            return ctypes.windll.shell32.IsUserAnAdmin()
+            if os.name == 'nt':
+                return ctypes.windll.shell32.IsUserAnAdmin()
+            return True  # Non-Windows systems don't need this check
         except:
             return False
 
     def elevate_privileges(self):
         """Restart the program with admin privileges."""
-        if not self.check_admin_privileges():
+        if os.name == 'nt' and not self.check_admin_privileges():
             script = sys.argv[0]
             params = ' '.join(sys.argv[1:])
             ret = ctypes.windll.shell32.ShellExecuteW(
@@ -180,6 +185,9 @@ exit /b 0
 
     def take_ownership_and_grant_permissions(self, path):
         """Take ownership of file/folder and grant full permissions."""
+        if os.name != 'nt':  # Skip on non-Windows systems
+            return True
+            
         try:
             # Get current process owner
             proc_owner = win32api.GetUserNameEx(win32con.NameSamCompatible)

@@ -7,7 +7,7 @@ import { api } from '../../api/client';
 import { useElectronFolder } from '../../hooks/useElectronFolder';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 
-const isElectron = Boolean(window.electronAPI);
+const isElectron = Boolean(window.electron);
 
 export const Navbar = () => {
   const { selectFolder, isLoading } = useElectronFolder();
@@ -15,20 +15,20 @@ export const Navbar = () => {
 
   const handleFolderSelect = async () => {
     try {
-      console.log('Checking electronAPI initialization...');
+      console.log('Checking electron initialization...');
       
-      if (!window.electronAPI) {
-        console.error('electronAPI is undefined');
-        throw new Error('Electron API not properly initialized');
+      if (!window.electron) {
+        console.error('Electron API not available');
+        return;
       }
 
-      if (typeof window.electronAPI.selectFolder !== 'function') {
-        console.error('selectFolder is not a function');
-        throw new Error('Electron API methods not properly exposed');
+      if (typeof window.electron.selectFolder !== 'function') { 
+        console.error('selectFolder function not available');
+        return;
       }
 
       console.log('Opening folder selector...');
-      const result = await window.electronAPI.selectFolder();
+      const result = await window.electron.selectFolder();
       console.log('Folder selection result:', result);
       
       if (result.success && result.path) {

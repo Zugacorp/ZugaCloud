@@ -6,12 +6,24 @@ export interface Config {
   sync_folder?: string;
   bucket_name: string;
   prefer_env_vars?: boolean;
+  storage_provider?: 'aws' | 'storj';
+  
+  // Storj-specific properties
+  storj_access_key?: string;
+  storj_secret_key?: string;
+  storj_endpoint?: string;
 }
 
 export interface AWSCredentials {
   aws_access_key: string;
   aws_secret_key: string;
-  region: string;
+  aws_region: string;
+}
+
+export interface StorjCredentials {
+  storj_access_key: string;
+  storj_secret_key: string;
+  storj_endpoint?: string;
 }
 
 export interface AWSError {

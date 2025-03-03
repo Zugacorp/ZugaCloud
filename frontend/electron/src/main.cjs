@@ -15,7 +15,7 @@ function createWindow() {
     width: 1200,
     height: 800,
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       contextIsolation: true,
       preload: preloadPath,
       sandbox: false,
@@ -25,22 +25,13 @@ function createWindow() {
 
   enable(mainWindow.webContents);
 
-  // Determine the correct path to load
-  const isDev = process.env.NODE_ENV === 'development';
-  const url = isDev 
-    ? 'http://localhost:5173'  // Vite dev server port
-    : `file://${path.join(__dirname, '../../dist/index.html')}`; // Production build path
-
-  try {
-    mainWindow.loadURL(url);
-    console.log('Loading URL:', url);
-    
-    if (isDev) {
-      mainWindow.webContents.openDevTools();
-    }
-  } catch (err) {
-    console.error('Failed to load URL:', err);
-    app.quit();
+  // Load the development server URL in development
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.loadURL('http://localhost:5001');
+    // Open DevTools if needed
+    // mainWindow.webContents.openDevTools();
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
   }
 }
 
@@ -94,18 +85,14 @@ ipcMain.handle('file:download', async (_, { url, filename }) => {
 });
 
 app.whenReady().then(() => {
-  createWindow();
   console.log('Electron app ready');
+  createWindow();
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+app.on('window-all-closed', function () {
+  if (process.platform !== 'darwin') app.quit();
 }); 

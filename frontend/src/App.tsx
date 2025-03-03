@@ -4,6 +4,7 @@ import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Settings } from './pages/Settings';
 import { LoginPage } from './components/auth/LoginPage';
+import { RegisterPage } from './components/auth/RegisterPage';
 import { AuthCallback } from './components/auth/AuthCallback';
 import { SyncProvider } from './contexts/SyncContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -33,6 +34,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Public route wrapper to redirect to dashboard if already authenticated
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -40,7 +60,22 @@ const App: React.FC = () => {
         <Router>
           <Routes>
             {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <LoginPage />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <RegisterPage />
+                </PublicRoute>
+              }
+            />
             <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Protected routes */}
@@ -65,23 +100,19 @@ const App: React.FC = () => {
               }
             />
 
-            {/* Redirect root to dashboard */}
+            {/* Root route - redirect to dashboard if authenticated, login if not */}
             <Route
               path="/"
               element={
-                <ProtectedRoute>
-                  <Navigate to="/dashboard" replace />
-                </ProtectedRoute>
+                <Navigate to="/login" replace />
               }
             />
 
-            {/* Catch all route - redirect to dashboard */}
+            {/* Catch all route - redirect to login */}
             <Route
               path="*"
               element={
-                <ProtectedRoute>
-                  <Navigate to="/dashboard" replace />
-                </ProtectedRoute>
+                <Navigate to="/login" replace />
               }
             />
           </Routes>
